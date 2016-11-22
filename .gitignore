@@ -1,4 +1,6 @@
 .vs/
-.VC.db
+*.VC.db
 Debug/
 Release/
+*.vcxproj.filters
+*.vcxproj.user
