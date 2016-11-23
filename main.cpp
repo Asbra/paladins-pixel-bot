@@ -31,7 +31,7 @@ BOOL ScanPixel(HWND hwnd, PLONG pixelX, PLONG pixelY, RECT scanArea, COLORREF* t
 	DeleteDC(cdc);
 	ReleaseDC(NULL, hdc);
 
-	for (int y = 0; y < scanHeight; y++) {
+	for (int y = scanHeight; y >= 0; y--) {
 		for (int x = 0; x < scanWidth; x++) {
 			BYTE r = bitData[3 * ((y * scanWidth) + x) + 2];
 			BYTE g = bitData[3 * ((y * scanWidth) + x) + 1];
@@ -99,8 +99,8 @@ int main()
 		Sleep(10);
 
 		if (GetAsyncKeyState(VK_END)) break;
-		bool aim = (GetAsyncKeyState(VK_CONTROL));
-		bool trigger = (GetAsyncKeyState(VK_MENU));
+		bool aim = (GetAsyncKeyState(VK_MENU));
+		bool trigger = (GetAsyncKeyState(VK_SHIFT));
 
 		if (GetForegroundWindow() == hwnd && ScanPixel(hwnd, &pixelX, &pixelY, scanArea, targetColors, colorDeviation))
 		{
@@ -108,13 +108,17 @@ int main()
 			LONG aimY = pixelY - centerY;
 
 			// Aim
-			if (aim) {
-				mouse_event(MOUSEEVENTF_MOVE, aimX / 10.f, aimY / 10.f + 6, 0, 0);
+			if (aim && abs(aimX) <= 30) {
+				mouse_event(MOUSEEVENTF_MOVE, aimX / 3.f + 2, aimY / 3.f - 6, 0, 0);
 			}
 
 			// Trigger
-			if (trigger && abs(aimX) <= 30) {
-				mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+			if (trigger && abs(aimX) <= 30 && !GetAsyncKeyState(VK_LBUTTON)) {
+				// mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+				// SendMessage(hwnd, BM_CLICK, 0, 0);
+				SendMessage(hwnd, WM_LBUTTONDOWN, 0, 0);
+				Sleep(1);
+				SendMessage(hwnd, WM_LBUTTONUP, 0, 0);
 			}
 		}
 	}
