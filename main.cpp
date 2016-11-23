@@ -7,7 +7,7 @@ BYTE colorDeviation = 0x10;// 64;
 
 BYTE* bitData = NULL;
 
-BOOL ScanPixel(HWND hwnd, PLONG pixelX, PLONG pixelY, RECT scanArea, COLORREF* targetColors, BYTE deviation)
+BOOL ScanPixel(HWND hwnd, PLONG pixelX, PLONG pixelY, RECT scanArea, COLORREF* targetColors, BYTE deviation, COLORREF* foundColor)
 {
 	HDC hdc = GetWindowDC(hwnd);
 	HDC cdc = CreateCompatibleDC(hdc);
@@ -31,6 +31,7 @@ BOOL ScanPixel(HWND hwnd, PLONG pixelX, PLONG pixelY, RECT scanArea, COLORREF* t
 	DeleteDC(cdc);
 	ReleaseDC(NULL, hdc);
 
+	// Scan from bottom to top
 	for (int y = scanHeight; y >= 0; y--) {
 		for (int x = 0; x < scanWidth; x++) {
 			BYTE r = bitData[3 * ((y * scanWidth) + x) + 2];
@@ -48,6 +49,7 @@ BOOL ScanPixel(HWND hwnd, PLONG pixelX, PLONG pixelY, RECT scanArea, COLORREF* t
 				{
 					*pixelX = scanArea.left + x;
 					*pixelY = scanArea.top + y;
+					*foundColor = targetColors[i];
 					return TRUE;
 				}
 			}
@@ -75,23 +77,16 @@ int main()
 
 	LONG centerX = width / 2;
 	LONG centerY = height / 2;
-	LONG nearAimX = width / 80;
-	LONG nearAimY = height / 64;
-	LONG fovX = width / 11;
-	LONG fovY = height / 4;
-	LONG scanL = centerX - fovX;
-	LONG scanT = centerY;
-	LONG scanR = centerX + fovX;
-	LONG scanB = centerY + fovY;
-	RECT scanArea = { centerX - fovX, centerY - fovY, centerX + fovX, centerY + fovY };
+	LONG fovX = 120;// width / 11;
+	LONG fovY = 30;// height / 4;
+	RECT scanArea = { centerX - fovX, centerY - fovY, centerX + fovX, centerY };
 	printf("Scan area %d,%d,%d,%d\n", scanArea.left, scanArea.top, scanArea.right, scanArea.bottom);
-	RECT nearAimScanArea = { centerX - nearAimX, centerY - nearAimY, centerX + nearAimX, centerY + nearAimY };
-	printf("Near aim scan area %d,%d,%d,%d\n", nearAimScanArea.left, nearAimScanArea.top, nearAimScanArea.right, nearAimScanArea.bottom);
 	LONG pixelX = 0;
 	LONG pixelY = 0;
 
 	LONG scanWidth = scanArea.right - scanArea.left;
 	LONG scanHeight = scanArea.bottom - scanArea.top;
+	printf("Scan area size %d,%d\n", scanWidth, scanHeight);
 	bitData = new BYTE[3 * scanWidth * scanHeight];
 
 	while (1)
@@ -101,15 +96,16 @@ int main()
 		if (GetAsyncKeyState(VK_END)) break;
 		bool aim = (GetAsyncKeyState(VK_MENU));
 		bool trigger = (GetAsyncKeyState(VK_SHIFT));
+		COLORREF foundColor = 0;
 
-		if (GetForegroundWindow() == hwnd && ScanPixel(hwnd, &pixelX, &pixelY, scanArea, targetColors, colorDeviation))
+		if (GetForegroundWindow() == hwnd && ScanPixel(hwnd, &pixelX, &pixelY, scanArea, targetColors, colorDeviation, &foundColor))
 		{
 			LONG aimX = pixelX - centerX;
 			LONG aimY = pixelY - centerY;
 
 			// Aim
-			if (aim && abs(aimX) <= 30) {
-				mouse_event(MOUSEEVENTF_MOVE, aimX / 3.f + 2, aimY / 3.f - 6, 0, 0);
+			if (aim && abs(aimX) <= 30 && foundColor == targetColors[1]) {
+				mouse_event(MOUSEEVENTF_MOVE, aimX / 2.f, aimY / 2.f, 0, 0);
 			}
 
 			// Trigger
