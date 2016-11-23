@@ -1,5 +1,5 @@
 # Shi**y pixel bot for the game [Paladins](https://www.paladins.com/)
 
 Hotkeys:
- * Hold Ctrl to use aimbot
- * Hold Alt to use triggerbot
+ * Hold Alt to use aimbot
+ * Hold Shift to use triggerbot
